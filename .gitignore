@@ -119,3 +119,5 @@ deps/uv/docs/code/
 deps/uv/docs/src/guide/
 
 .vscode/
+
+node_modules/
