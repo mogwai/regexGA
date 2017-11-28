@@ -1,103 +1,96 @@
 const Genetic = require('genetic-js')
+const RegexEntity = require('./regexentity')
 let genetic = Genetic.create()
 
-genetic.optimize = Genetic.Optimize.Maximize;
-genetic.select1 = Genetic.Select1.Tournament2;
-genetic.select2 = Genetic.Select2.Tournament2;
+// Select optimisations and selection methods
+genetic.optimize = Genetic.Optimize.Maximize
+genetic.select1 = Genetic.Select1.Tournament2
+genetic.select2 = Genetic.Select2.Tournament2
+
+var userData = {
+    correct: ["himion0@gmail.com", "valid@email.com", "invalid@email.com",
+        "harry@hotmail.co.uk", "admin@yoked.io", "email@emample.com",
+        "hotstuff123@email.com", "well_done@email.com"],
+    invalid: []
+    // "asda", ".com", "email@a.com", "email.a.o", "himion0 @gmail.com",
+    // "!himion0@gmail.com", "something@email.com"]
+}
+
+const _ = genetic.__proto__._ = require('lodash')
+genetic.__proto__.RegexEntity = RegexEntity
+
+genetic.__proto__.startingsize = 5
 
 genetic.seed = function () {
-    function randomString(len) {
-        var text = "";
-        var charset = "abcdefghijklmnopqrstuvwxyz0123456789";
-        for (var i = 0; i < len; i++)
-            text += charset.charAt(Math.floor(Math.random() * charset.length));
-
-        return text;
-    }
-
-    // create random strings that are equal in length to solution
-    return randomString(40);
+    return new this.RegexEntity(this.startingsize)
 }
 
 genetic.mutate = function (entity) {
-
-    function replaceAt(str, index, character) {
-        return str.substr(0, index) + character + str.substr(index + character.length);
-    }
-
-    // chromosomal drift
-    var i = Math.floor(Math.random() * entity.length)
-    return replaceAt(entity, i, String.fromCharCode(entity.charCodeAt(i) + (Math.floor(Math.random() * 2) ? 1 : -1)));
+    entity.mutate()
+    return entity
 }
 
 genetic.crossover = function (mother, father) {
-    // two-point crossover
-    var len = mother.length;
-    var ca = Math.floor(Math.random() * len);
-    var cb = Math.floor(Math.random() * len);
-    if (ca > cb) {
-        var tmp = cb;
-        cb = ca;
-        ca = tmp;
-    }
+    let mothercell = _.sample(mother.content)
+    let motherindex = mother.content.indexOf(mothercell)
+    let fathercell = _.sample(father.content)
+    let fatherindex = father.content.indexOf(fathercell)
 
-    var son = father.substr(0, ca) + mother.substr(ca, cb - ca) + father.substr(cb);
-    var daughter = mother.substr(0, ca) + father.substr(ca, cb - ca) + mother.substr(cb);
+    let son = _.cloneDeep(father)
+    son.content[fatherindex] = mothercell
 
-    return [son, daughter];
+    let daughter = _.cloneDeep(mother)
+    daughter.content[motherindex] = fathercell
+
+    return [son, daughter]
 }
 
 genetic.fitness = function (entity) {
-    var fitness = 0;
+    let regexstring = entity.toString()
 
-    var i;
-    for (i = 0; i < entity.length; ++i) {
-        // increase fitness for each character that matches
-        if (entity[i] == this.userData["solution"][i])
-            fitness += 1;
+    let start = new Date()
+    let re, fitness = 0
+    try {
+        re = new RegExp(regexstring)
+        this.userData.correct.forEach(v => {
+            let matches = v.match(re)
+            if (matches && matches.length > 0) {
+                matches = matches.map(x => x ? x.length: 0)
+                let longestmatch = _.max(matches)
+                fitness += longestmatch.length
+            }
+        })
 
-        // award fractions of a point as we get warmer
-        fitness += (127 - Math.abs(entity.charCodeAt(i) - this.userData["solution"].charCodeAt(i))) / 50;
+        this.userData.invalid.forEach(v => {
+            let match = _.max(v.match(re))
+            if (match) {
+                fitness -= match.length
+            }
+        })
+
+    } catch (e) {
+        console.log(e)
+        return 0
     }
-    return fitness;
+
+    return fitness
 }
 
 genetic.generation = function (pop, generation, stats) {
-    // stop running once we've reached the solution
-    return pop[0].entity != this.userData["solution"];
-}
-
-genetic.notification = function (pop, generation, stats, isFinished) {
-    console.log(pop)
-    var value = pop[0].entity;
-    this.last = this.last || value;
-
-    if (pop != 0 && value == this.last)
-        return;
-
-
-    var solution = [];
-    var i;
-    for (i = 0; i < value.length; ++i) {
-        var diff = value.charCodeAt(i) - this.last.charCodeAt(i);
-        var style = "background: transparent;";
-        console.log(value[i])
-    }
-    console.log(generation)
-    console.log(pop[0].fitness.toPrecision(5))
-    console.log(solution.join(""))
+    let best = pop[0].entity
+    console.log(`[Generation ${generation}] MAX ${stats.maximum} | MIN ${stats.minimum}`)
+    console.log(`${best.toString()}\n`)
+    return true
 }
 
 var config = {
-    iterations: 4000, 
-    size: 250,
+    iterations: 4000,
+    size: 1000,
     crossover: 0.3,
     mutation: 0.3,
-    skip: 20
+    skip: 10
 }
 
-var userData = {
-    "solution": "asda"
-}
-
-genetic.evolve(config, userData);
+genetic.evolve(config, userData)
+console.log(genetic)
+let x = 1
