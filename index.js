@@ -19,7 +19,7 @@ var userData = {
 const _ = genetic.__proto__._ = require('lodash')
 genetic.__proto__.RegexEntity = RegexEntity
 
-genetic.__proto__.startingsize = 5
+genetic.__proto__.startingsize = 10
 
 genetic.seed = function () {
     return new this.RegexEntity(this.startingsize)
@@ -47,10 +47,11 @@ genetic.crossover = function (mother, father) {
 
 genetic.fitness = function (entity) {
     let regexstring = entity.toString()
-
+    entity.preventBoundaryOperator()
     let start = new Date()
     let re, fitness = 0
     try {
+
         re = new RegExp(regexstring)
         this.userData.correct.forEach(v => {
             let matches = v.match(re)
@@ -67,13 +68,11 @@ genetic.fitness = function (entity) {
                 fitness -= match.length
             }
         })
-
+        return fitness
     } catch (e) {
-        console.log(e)
-        return 0
+        console.log(e.stack)
+        return -20
     }
-
-    return fitness
 }
 
 genetic.generation = function (pop, generation, stats) {

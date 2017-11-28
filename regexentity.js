@@ -51,16 +51,13 @@ class RegexEntity {
 
     generateOperator() {
         if (Math.random() > 0.3) return ""
-
-        
         let last = _.last(this.content)
         if (last) {
-            console.log(last.toString())
             if (typeof last !== "string") {
                 let operator = last.operator
                 last = last.toString().replace(operator, '')
             }
-            last = last.substring(last.length - 3, last.length - 1)
+            last = last[last.length-2] + last[last.length-1]
         }
         if (last === "\\B" || last === "\\b")
             return ""
@@ -113,6 +110,19 @@ class RegexEntity {
         } else {
             let i = _.findIndex(this.content, mutatingcell)
             this.content.splice(i, 1, RegexEntity.randomChar())
+        }
+        this.operator = this.generateOperator()
+    }
+
+    preventBoundaryOperator(){
+        if (this.operator){
+            let last = _.last(this.content)
+            if (last) {
+                if (typeof last !== "string") 
+                    last.preventBoundaryOperator()
+                else if (last === "\\b" || last === "\\B")
+                    this.operator = ""
+            }
         }
     }
 }
