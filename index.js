@@ -12,15 +12,28 @@ genetic.optimize = Genetic.Optimize.Maximize
 genetic.select1 = Genetic.Select1.Tournament2
 genetic.select2 = Genetic.Select2.Tournament2
 
+
+const correctEmails = ["himion0@gmail.com",
+    "harry@hotmail.co.uk", "admin@yoked.io", "email@emample.com",
+    "some@place.in.iraq",
+    "123@gmail.com", "big_123@gmail.com"]
+const invalidEmails = [
+    " ", " himion0@gmail.com", " ", "himio!*@*(*&.com",
+    "asda", ".com", "himion0 @ gmai . com",
+    "!himion0@gmail.com", "himion0@", "@gmail.com"
+]
+
+const correctNames = [
+    "Harry Coultas Blum", "Valerie Coultas", "Paul Blum", "Mclloyd Vuong",
+    "Stewart Scott", "Mohamed Abdula"
+]
+
+const invalidNames = [
+    "123 123", "#", " ", "!(&*&(", "*&^* *&^", "Samuel Lee Jackson is a mother fucker"
+]
 var userData = {
-    correct: ["himion0@gmail.com",
-        "harry@hotmail.co.uk", "admin@yoked.io", "email@emample.com",
-        "some@place.in.iraq",
-        "123@gmail.com", "big_123@gmail.com"],
-    invalid: [
-        " ", " himion0@gmail.com", " ", "himio!*@*(*&.com",
-        "asda", ".com", "himion0 @ gmai . com",
-        "!himion0@gmail.com", "himion0@", "@gmail.com"]
+    correct: correctEmails,
+    invalid: invalidEmails
 }
 
 const _ = genetic.__proto__._ = require('lodash')
