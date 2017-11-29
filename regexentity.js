@@ -127,7 +127,7 @@ class RegexEntity {
                     cg.generate()
                     this.content.push(cg)
                 } else {
-                    this.content.push(RegexEntity.randomChar())
+                    this.content.splice(_.random(this.content.length), 0, RegexEntity.randomChar())
                 }
             } else {
                 let remove = _.sample(this.content)
@@ -184,7 +184,7 @@ class CaptureGroup extends RegexEntity {
     createCaputureGroup(length) {
         this.content = _.times(this.maxlength, () => {
             let c = RegexEntity.randomChar().replace("\\", "")
-            while (c === "]" || c === "\\") {
+            while (c === "]" || c === "\\" || c === "^") {
                 c = RegexEntity.randomChar().replace("\\", "")
             }
             return c
@@ -203,6 +203,7 @@ class CaptureGroup extends RegexEntity {
     }
 
     mutate() {
+        this.isRange = Math.random < 0.5
         if (this.isRange) {
             this.content = []
             this.createRange()

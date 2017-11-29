@@ -1,3 +1,8 @@
+/**
+ * A gain .618033989 or loss of .381966011 GOLDEN RATIO
+ */
+
+
 const Genetic = require('genetic-js')
 const RegexEntity = require('./regexentity')
 let genetic = Genetic.create()
@@ -8,12 +13,14 @@ genetic.select1 = Genetic.Select1.Tournament2
 genetic.select2 = Genetic.Select2.Tournament2
 
 var userData = {
-    correct: ["himion0@gmail.com", "valid@email.com", "invalid@email.com",
+    correct: ["himion0@gmail.com",
         "harry@hotmail.co.uk", "admin@yoked.io", "email@emample.com",
-        "hotstuff123@email.com", "well_done@email.com"],
+        "some@place.in.iraq",
+        "123@gmail.com", "big_123@gmail.com"],
     invalid: [
-        "asda", ".com", "email@a.com", "email.a.o", "himion0 @gmail.com",
-        "!himion0@gmail.com", "something@email.com", "",]
+        " ", " himion0@gmail.com", " ", "himio!*@*(*&.com",
+        "asda", ".com", "himion0 @ gmai . com",
+        "!himion0@gmail.com", "himion0@", "@gmail.com"]
 }
 
 const _ = genetic.__proto__._ = require('lodash')
@@ -47,6 +54,7 @@ genetic.crossover = function (mother, father) {
 
 genetic.fitness = function (entity) {
     entity.preventBoundaryOperator()
+    entity.operator = ""
     let regexstring = entity.toString()
     let start = new Date()
     let re, fitness = 0
@@ -55,22 +63,28 @@ genetic.fitness = function (entity) {
         this.userData.correct.forEach(v => {
             let matches = v.match(re)
             if (matches && matches.length > 0) {
-                matches = matches.map(x => x ? x.length : 0)
-                fitness += _.max(matches)
+                let biggestmatch = _.maxBy(matches, x => x ? x.length : 0).length
+                fitness += 2 * (biggestmatch ? biggestmatch / matches.input.length : 0)
             }
         })
 
         this.userData.invalid.forEach(v => {
-            let match = _.max(v.match(re))
-            if (match) {
-                fitness -= match.length
+            let matches = v.match(re)
+            if (matches && matches.length > 0) {
+                let biggestmatch = _.maxBy(matches, x => x ? x.length : 0).length
+                fitness -= 2 * (biggestmatch ? biggestmatch / matches.input.length : 0)
             }
         })
+
+        fitness *= 10
+        fitness -= regexstring.length
         return fitness
     } catch (e) {
         console.log(e.stack)
         return -20
+
     }
+
 }
 
 genetic.generation = function (pop, generation, stats) {
@@ -82,7 +96,7 @@ genetic.generation = function (pop, generation, stats) {
 
 var config = {
     iterations: 4000,
-    size: 100,
+    size: 1000,
     crossover: 0.4,
     mutation: 0.1,
     skip: 20
