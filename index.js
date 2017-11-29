@@ -11,9 +11,9 @@ var userData = {
     correct: ["himion0@gmail.com", "valid@email.com", "invalid@email.com",
         "harry@hotmail.co.uk", "admin@yoked.io", "email@emample.com",
         "hotstuff123@email.com", "well_done@email.com"],
-    invalid: []
-    // "asda", ".com", "email@a.com", "email.a.o", "himion0 @gmail.com",
-    // "!himion0@gmail.com", "something@email.com"]
+    invalid: [
+        "asda", ".com", "email@a.com", "email.a.o", "himion0 @gmail.com",
+        "!himion0@gmail.com", "something@email.com", "",]
 }
 
 const _ = genetic.__proto__._ = require('lodash')
@@ -22,7 +22,7 @@ genetic.__proto__.RegexEntity = RegexEntity
 genetic.__proto__.startingsize = 10
 
 genetic.seed = function () {
-    return new this.RegexEntity(this.startingsize)
+    return new this.RegexEntity(this.startingsize, true)
 }
 
 genetic.mutate = function (entity) {
@@ -46,19 +46,17 @@ genetic.crossover = function (mother, father) {
 }
 
 genetic.fitness = function (entity) {
-    let regexstring = entity.toString()
     entity.preventBoundaryOperator()
+    let regexstring = entity.toString()
     let start = new Date()
     let re, fitness = 0
     try {
-
         re = new RegExp(regexstring)
         this.userData.correct.forEach(v => {
             let matches = v.match(re)
             if (matches && matches.length > 0) {
-                matches = matches.map(x => x ? x.length: 0)
-                let longestmatch = _.max(matches)
-                fitness += longestmatch.length
+                matches = matches.map(x => x ? x.length : 0)
+                fitness += _.max(matches)
             }
         })
 
@@ -84,10 +82,10 @@ genetic.generation = function (pop, generation, stats) {
 
 var config = {
     iterations: 4000,
-    size: 1000,
-    crossover: 0.3,
-    mutation: 0.3,
-    skip: 10
+    size: 100,
+    crossover: 0.4,
+    mutation: 0.1,
+    skip: 20
 }
 
 genetic.evolve(config, userData)

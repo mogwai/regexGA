@@ -26,7 +26,7 @@ let OperatorFunctions = ['+', '*', '?', '{%s,%s}', '']
 const CHARACTERS = require('./regexcharacters')
 
 class RegexEntity {
-    constructor(maxlength) {
+    constructor(maxlength, noop) {
         this.maxlength = maxlength
         this.content = []
         for (let i = maxlength; i > -1; i--) {
@@ -46,7 +46,8 @@ class RegexEntity {
                 this.content.push(RegexEntity.randomChar())
             }
         }
-        this.operator = this.generateOperator()
+        if (!noop)
+            this.operator = this.generateOperator()
     }
 
     generateOperator() {
@@ -57,7 +58,7 @@ class RegexEntity {
                 let operator = last.operator
                 last = last.toString().replace(operator, '')
             }
-            last = last[last.length-2] + last[last.length-1]
+            last = last[last.length - 2] + last[last.length - 1]
         }
         if (last === "\\B" || last === "\\b")
             return ""
@@ -104,21 +105,43 @@ class RegexEntity {
     }
 
     mutate() {
-        let mutatingcell = _.sample(this.content)
-        if (mutatingcell instanceof RegexEntity) {
-            mutatingcell.mutate()
+        let r = Math.random()
+        if (r < 0.5) {
+            let mutatingcell = _.sample(this.content)
+            if (mutatingcell instanceof RegexEntity) {
+                mutatingcell.mutate()
+            } else {
+                let i = _.findIndex(this.content, mutatingcell)
+                this.content.splice(i, 1, RegexEntity.randomChar())
+            }
+            this.operator = this.generateOperator()
         } else {
-            let i = _.findIndex(this.content, mutatingcell)
-            this.content.splice(i, 1, RegexEntity.randomChar())
+            r = Math.random()
+            if (r < 0.5 || this.content.length < 2) {
+                r = Math.random()
+                let len = _.random(2, 5)
+                if (r < 1 / 3) {
+                    this.content.push(new RegexEntity(len))
+                } else if (r < 2 / 3) {
+                    let cg = new CaptureGroup(len)
+                    cg.generate()
+                    this.content.push(cg)
+                } else {
+                    this.content.push(RegexEntity.randomChar())
+                }
+            } else {
+                let remove = _.sample(this.content)
+                let i = this.content.indexOf(remove)
+                this.content.splice(i, 1)
+            }
         }
-        this.operator = this.generateOperator()
     }
 
-    preventBoundaryOperator(){
-        if (this.operator){
+    preventBoundaryOperator() {
+        if (this.operator) {
             let last = _.last(this.content)
             if (last) {
-                if (typeof last !== "string") 
+                if (typeof last !== "string")
                     last.preventBoundaryOperator()
                 else if (last === "\\b" || last === "\\B")
                     this.operator = ""
