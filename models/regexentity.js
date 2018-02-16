@@ -23,7 +23,7 @@ const _ = require('lodash')
 
 let OperatorFunctions = ['+', '*', '?', '{%s,%s}', '']
 
-const CHARACTERS = require('./regexcharacters')
+const CHARACTERS = require('../characters')
 
 class RegexEntity {
     constructor(maxlength, noop) {
@@ -104,18 +104,19 @@ class RegexEntity {
         return this.toString().length
     }
 
+    
+    
     mutate() {
         let r = Math.random()
-        if (r < 0.5) {
+        if (r < 0.45) {
             let mutatingcell = _.sample(this.content)
             if (mutatingcell instanceof RegexEntity) {
                 mutatingcell.mutate()
             } else {
-                let i = _.findIndex(this.content, mutatingcell)
+                let i = this.content.indexOf(mutatingcell)
                 this.content.splice(i, 1, RegexEntity.randomChar())
             }
-            this.operator = this.generateOperator()
-        } else {
+        } else if (r < .9) {
             r = Math.random()
             if (r < 0.5 || this.content.length < 2) {
                 r = Math.random()
@@ -134,6 +135,8 @@ class RegexEntity {
                 let i = this.content.indexOf(remove)
                 this.content.splice(i, 1)
             }
+        } else {
+            this.operator = this.generateOperator()
         }
     }
 
@@ -208,18 +211,15 @@ class CaptureGroup extends RegexEntity {
             this.content = []
             this.createRange()
         } else {
-            this.maxlength += _.sample([-1, 1])
+            if (this.maxlength > 2)
+                this.maxlength += _.sample([-1, 1])
+            else
+                this.maxlength += 1
             this.createCaputureGroup()
         }
-
+        
         this.operator = this.generateOperator()
     }
 }
-
-let re = new CaptureGroup()
-
-re.content = ["\\B"]
-re.operator = re.generateOperator()
-re.mutate()
 
 module.exports = RegexEntity

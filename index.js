@@ -4,7 +4,7 @@
 
 
 const Genetic = require('genetic-js')
-const RegexEntity = require('./regexentity')
+const RegexEntity = require('./models/regexentity')
 let genetic = Genetic.create()
 
 // Select optimisations and selection methods
@@ -13,13 +13,13 @@ genetic.select1 = Genetic.Select1.Tournament2
 genetic.select2 = Genetic.Select2.Tournament2
 
 
-const correctEmails = ["himion0@gmail.com",
+const correctEmails = ["himion0@gmail.com", "asd9a98s7da9s8d7987da98sd7averylong@gmail.com",
     "harry@hotmail.co.uk", "admin@yoked.io", "email@emample.com",
     "some@place.in.iraq",
-    "123@gmail.com", "big_123@gmail.com"]
+    "123@gmail.com", "big_123@gmail.com", "123@averglongdomaininaweirdplace.co.uk"]
 const invalidEmails = [
-    " ", " himion0@gmail.com", " ", "himio!*@*(*&.com",
-    "asda", ".com", "himion0 @ gmai . com",
+    " ", " himion0@gmail.com", "himio!*@*(*&.com",
+    "asda", ".com", "(*&(*&@&.com",
     "!himion0@gmail.com", "himion0@", "@gmail.com"
 ]
 
@@ -69,35 +69,58 @@ genetic.fitness = function (entity) {
     entity.preventBoundaryOperator()
     entity.operator = ""
     let regexstring = entity.toString()
-    let start = new Date()
+    let correct = this.userData.correct
+    let invalid = this.userData.invalid
     let re, fitness = 0
     try {
+        let start = new Date()
         re = new RegExp(regexstring)
-        this.userData.correct.forEach(v => {
+        let percentagecorrect = 0
+        
+        correct.forEach(v => {
             let matches = v.match(re)
             if (matches && matches.length > 0) {
                 let biggestmatch = _.maxBy(matches, x => x ? x.length : 0).length
-                fitness += 2 * (biggestmatch ? biggestmatch / matches.input.length : 0)
+                percentagecorrect += 2 * (biggestmatch ? biggestmatch / matches.input.length : 0)
             }
         })
 
-        this.userData.invalid.forEach(v => {
+        // Get mean of correct percentages
+        if (correct.length && percentagecorrect)
+            fitness = percentagecorrect / correct.length
+
+        let percentageinvalid = 0
+        invalid.forEach(v => {
             let matches = v.match(re)
             if (matches && matches.length > 0) {
                 let biggestmatch = _.maxBy(matches, x => x ? x.length : 0).length
-                fitness -= 2 * (biggestmatch ? biggestmatch / matches.input.length : 0)
+                percentageinvalid += 2 * (biggestmatch ? biggestmatch / matches.input.length : 0)
             }
         })
 
-        fitness *= 10
+        // Get average invalid
+        if (invalid.length && percentageinvalid)
+            fitness -= percentageinvalid / invalid.length
+
+        // Scale values 
+
+        fitness *= 100
+
+        // Let performance of the regex affect the fitness
+        let finish = (new Date() - start)
+
+        if (finish > 10000)
+            console.log(`TOOK TO LONG! ${regexstring} took ${finish}ms `)
+
+        fitness -= finish / 1000
+
+        // Promote smaller regex strings
         fitness -= regexstring.length
         return fitness
     } catch (e) {
         console.log(e.stack)
-        return -20
-
     }
-
+    return fitness
 }
 
 genetic.generation = function (pop, generation, stats) {
@@ -109,12 +132,13 @@ genetic.generation = function (pop, generation, stats) {
 
 var config = {
     iterations: 4000,
-    size: 1000,
+    size: 500,
     crossover: 0.4,
-    mutation: 0.1,
+    mutation: 0.2,
     skip: 20
 }
 
 genetic.evolve(config, userData)
 console.log(genetic)
+
 let x = 1
